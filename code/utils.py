@@ -50,6 +50,8 @@ SQM2SQMI = 1 / SQMI2SQM # sq. m. to sq. mi.
 MPS2MPH = 2.2369363 # meters per second to miles per hr
 MPH2MPS = 1 / MPS2MPH # miles per hr to meters per second
 
+SEED = 1234 # common random state initializer for all main random operations
+
 #%% Helper/utility functions
 def mkdir(path: str | Path) -> Path:
     """Make a folder if it does not exist."""
