@@ -30,6 +30,10 @@ from sklearn.model_selection import train_test_split
 from tqdm.notebook import tqdm
 import yaml
 
+#%% Important paths
+DATA = Path('../data')
+FIG = Path('../fig')
+
 #%% Aliases
 D = dict
 CAT = 'category' # pandas Categorical
@@ -148,7 +152,7 @@ def pplot(ax=None, fig=None, size=None, dpi=None, title=None, xlab=None,
 
 
 def imsave(title=None, fig=None, ax=None, dpi=300,
-           root='../fig', ext='png', opaque=True):
+           root=FIG, ext='png', opaque=True):
     """Custom method to save the current matplotlib figure."""
     fig = fig or plt.gcf()
     ax = ax or fig.axes[0]
@@ -157,12 +161,6 @@ def imsave(title=None, fig=None, ax=None, dpi=300,
     title = re.sub(r'[^A-Za-z\s\d,.-]', '_', title)
     fig.savefig(f'{mkdir(root)}/{title}.{ext}', dpi=dpi, bbox_inches='tight',
                 transparent=not opaque, facecolor='white' if opaque else 'auto')
-
-
-def disp_table(df: Pdf, styles=()) -> None:
-    """Fancy display a Pandas dataframe in notebooks with custom styles."""
-    display(HTML(df.style.set_table_styles(styles)
-                 .to_html().replace('\\n', '<br>')))
 
 
 def disp(x: Pdf | Gdf | Series | GeoSeries, top=1):
