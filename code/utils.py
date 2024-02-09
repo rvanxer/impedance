@@ -19,15 +19,18 @@ from geopandas import GeoSeries
 from IPython.display import display, HTML
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+from matplotlib_scalebar.scalebar import ScaleBar
 import numpy as np
 from numpy import array as Arr
 from numpy.typing import ArrayLike
 import pandas as pd
 from pandas import DataFrame as Pdf
 from pandas import Series
+from pyarrow.parquet import read_schema
 import seaborn as sns
 from sklearn.model_selection import train_test_split
 from tqdm.notebook import tqdm
+import xyzservices.providers as xyz
 import yaml
 
 #%% Important paths
@@ -151,6 +154,15 @@ def pplot(ax=None, fig=None, size=None, dpi=None, title=None, xlab=None,
     return ax
 
 
+def basemap(ax, source=xyz.OpenStreetMap.Mapnik, crs=CRS_M,
+            scalebar=True, width=0.2):
+    """Add a basemap to a matplotlib axes."""
+    ctx.add_basemap(ax=ax, crs=crs, source=source)
+    if scalebar:
+        ax.add_artist(ScaleBar(width))
+    return ax
+
+
 def imsave(title=None, fig=None, ax=None, dpi=300,
            root=FIG, ext='png', opaque=True):
     """Custom method to save the current matplotlib figure."""
@@ -163,6 +175,25 @@ def imsave(title=None, fig=None, ax=None, dpi=300,
                 transparent=not opaque, facecolor='white' if opaque else 'auto')
 
 
+def file_check(path: str | Path, overwrite=False, read_func=None,
+               **read_kws) -> None | Pdf:
+    """Return a pandas dataframe from the provided path if it is a 
+    valid CSV or parquet file."""
+    path = Path(path)
+    if path.exists() and not overwrite:
+        if read_func:
+            return read_func(path, **read_kws)
+        ext = path.suffix[1:]
+        if ext == 'csv':
+            return pd.read_csv(ext, **read_kws)
+        if ext == 'parquet':
+            if 'geometry' in read_schema(path).names:
+                return gpd.read_parquet(path, **read_kws)
+            else:
+                return pd.read_parquet(path, **read_kws)
+        return ext
+
+
 def disp(x: Pdf | Gdf | Series | GeoSeries, top=1):
     """Custom display for DataFrame and Series objects in Jupyter notebooks."""
     def f(tabular: bool, crs: bool):
@@ -170,7 +201,7 @@ def disp(x: Pdf | Gdf | Series | GeoSeries, top=1):
                  else f'{x.size:,} rows')
         mem = x.memory_usage(deep=True) / (1024 ** 2)
         mem = f'Memory: {(mem.sum() if tabular else mem):.1f} MiB'
-        crs = f'CRS: {x.crs.srs}' if crs else ''
+        crs = repr(x.crs).split('\n')[0] if crs else ''
         print(shape + '; ' + mem + ('; ' + crs if crs else ''))
         if tabular:
             types = Pdf({x.index.name or '': '<' + x.dtypes.astype(str) + '>'}).T
