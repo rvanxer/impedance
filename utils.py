@@ -92,7 +92,7 @@ def mkdir(path):
     return Path(path)
 
 
-def factor(x):
+def factorize(x):
     """Create a categorical series with categories in the original order."""
     cats = pd.Series(x).drop_duplicates()
     return pd.Categorical(x, categories=cats)
